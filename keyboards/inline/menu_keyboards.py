@@ -1,4 +1,6 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from loader import bot
+from data.config import admin_id
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from aiogram.utils.callback_data import CallbackData
 
 from utils.db_api.db_commands import get_subcategories, count_items, get_items, get_categories
@@ -15,9 +17,13 @@ def make_callback_data(level, category="0", subcategory="0", item_id="0"):
 
 
 # Создаем функцию, которая отдает клавиатуру с доступными категориями
-async def categories_keyboard():
-    # Указываем, что текущий уровень меню - 0
-    CURRENT_LEVEL = 0
+async def categories_keyboard(user):
+    # Указываем, что текущий уровень меню - 0, при заходе обычным пользователем
+    if user == "customer":
+        CURRENT_LEVEL = 0
+    # Указываем, что текущий уровень меню - 0, при заходе с редактированием
+    elif user == "edit":
+        CURRENT_LEVEL = 10
 
     # Создаем Клавиатуру
     markup = InlineKeyboardMarkup()
@@ -38,15 +44,20 @@ async def categories_keyboard():
         markup.insert(
             InlineKeyboardButton(text=button_text, callback_data=callback_data)
         )
-
+    await bot.send_message(chat_id=admin_id, text=make_callback_data(level=10))
+    await bot.send_message(chat_id=admin_id, text=CURRENT_LEVEL)
     # Возвращаем созданную клавиатуру в хендлер
     return markup
 
 
 # Создаем функцию, которая отдает клавиатуру с доступными подкатегориями, исходя из выбранной категории
-async def subcategories_keyboard(category):
-    # Текущий уровень - 1
-    CURRENT_LEVEL = 1
+async def subcategories_keyboard(category, user):
+    # Указываем, что текущий уровень меню - 1, при заходе обычным пользователем
+    if user == "customer":
+        CURRENT_LEVEL = 1
+    # Указываем, что текущий уровень меню - 11, при заходе с редактированием
+    elif user == "edit":
+        CURRENT_LEVEL = 11
     markup = InlineKeyboardMarkup()
 
     # Забираем список товаров с РАЗНЫМИ подкатегориями из базы данных с учетом выбранной категории и проходим по ним
@@ -76,8 +87,13 @@ async def subcategories_keyboard(category):
 
 
 # Создаем функцию, которая отдает клавиатуру с доступными товарами, исходя из выбранной категории и подкатегории
-async def items_keyboard(category, subcategory):
-    CURRENT_LEVEL = 2
+async def items_keyboard(category, subcategory, user):
+    # Указываем, что текущий уровень меню - 2, при заходе обычным пользователем
+    if user == "customer":
+        CURRENT_LEVEL = 2
+    # Указываем, что текущий уровень меню - 12, при заходе с редактированием
+    elif user == "edit":
+        CURRENT_LEVEL = 12
 
     # Устанавливаю row_width = 1, чтобы показывалась одна кнопка в строке на товар
     markup = InlineKeyboardMarkup(row_width=1)
@@ -109,8 +125,13 @@ async def items_keyboard(category, subcategory):
 
 
 # Создаем функцию, которая отдает клавиатуру с кнопками "купить" и "назад" для выбранного товара
-def item_keyboard(category, subcategory, item_id):
-    CURRENT_LEVEL = 3
+def item_keyboard(category, subcategory, item_id, user):
+    # Указываем, что текущий уровень меню - 3, при заходе обычным пользователем
+    if user == "customer":
+        CURRENT_LEVEL = 3
+    # Указываем, что текущий уровень меню - 13, при заходе с редактированием
+    elif user == "edit":
+        CURRENT_LEVEL = 13
     markup = InlineKeyboardMarkup()
     markup.row(
         InlineKeyboardButton(
@@ -125,3 +146,21 @@ def item_keyboard(category, subcategory, item_id):
                                              category=category, subcategory=subcategory))
     )
     return markup
+
+
+# Создаем функцию, которая отдает клавиатуру панели администратора
+async def admin_keyboard():
+    CURRENT_LEVEL = 99
+    # Создаем Клавиатуру
+    markup = InlineKeyboardMarkup()
+    markup.insert(
+            InlineKeyboardButton(text="Редактировать товар", callback_data=make_callback_data(level=10))
+            #InlineKeyboardButton(text="Добавить товар", callback_data=make_callback_data(level=20))
+        )
+    markup.row(
+        InlineKeyboardButton(
+            text="Выход",
+            callback_data=make_callback_data(level=0))
+    )
+    return markup
+

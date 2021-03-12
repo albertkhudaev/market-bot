@@ -5,7 +5,7 @@ from aiogram.dispatcher.filters import Command
 from aiogram.types import CallbackQuery, Message
 
 from keyboards.inline.menu_keyboards import menu_cd, categories_keyboard, subcategories_keyboard, \
-    items_keyboard, item_keyboard
+    items_keyboard, item_keyboard, admin_keyboard
 from loader import dp
 from utils.db_api.db_commands import get_item
 
@@ -22,7 +22,7 @@ async def show_menu(message: types.Message):
 # Поэтому ловим все остальное в **kwargs
 async def list_categories(message: Union[CallbackQuery, Message], **kwargs):
     # Клавиатуру формируем с помощью следующей функции (где делается запрос в базу данных)
-    markup = await categories_keyboard()
+    markup = await categories_keyboard("customer")
 
     # Проверяем, что за тип апдейта. Если Message - отправляем новое сообщение
     if isinstance(message, Message):
@@ -36,7 +36,7 @@ async def list_categories(message: Union[CallbackQuery, Message], **kwargs):
 
 # Функция, которая отдает кнопки с подкатегориями, по выбранной пользователем категории
 async def list_subcategories(callback: CallbackQuery, category, **kwargs):
-    markup = await subcategories_keyboard(category)
+    markup = await subcategories_keyboard(category, "customer")
 
     # Изменяем сообщение, и отправляем новые кнопки с подкатегориями
     await callback.message.edit_reply_markup(markup)
@@ -44,7 +44,7 @@ async def list_subcategories(callback: CallbackQuery, category, **kwargs):
 
 # Функция, которая отдает кнопки с Названием и ценой товара, по выбранной категории и подкатегории
 async def list_items(callback: CallbackQuery, category, subcategory, **kwargs):
-    markup = await items_keyboard(category, subcategory)
+    markup = await items_keyboard(category, subcategory, "customer")
 
     # Изменяем сообщение, и отправляем новые кнопки с подкатегориями
     await callback.message.edit_text(text="Смотри, что у нас есть", reply_markup=markup)
@@ -52,7 +52,7 @@ async def list_items(callback: CallbackQuery, category, subcategory, **kwargs):
 
 # Функция, которая отдает уже кнопку Купить товар по выбранному товару
 async def show_item(callback: CallbackQuery, category, subcategory, item_id):
-    markup = item_keyboard(category, subcategory, item_id)
+    markup = item_keyboard(category, subcategory, item_id, "customer")
 
     # Берем запись о нашем товаре из базы данных
     item = await get_item(item_id)
@@ -86,7 +86,12 @@ async def navigate(call: CallbackQuery, callback_data: dict):
         "0": list_categories,  # Отдаем категории
         "1": list_subcategories,  # Отдаем подкатегории
         "2": list_items,  # Отдаем товары
-        "3": show_item  # Предлагаем купить товар
+        "3": show_item,
+        "10": list_categories_edit,
+        "11": list_subcategories_edit,
+        "12": list_items_edit,
+        "13": show_item_edit,
+        "99": admin_keyboard  # Предлагаем купить товар
     }
 
     # Забираем нужную функцию для выбранного уровня
@@ -99,3 +104,31 @@ async def navigate(call: CallbackQuery, callback_data: dict):
         subcategory=subcategory,
         item_id=item_id
     )
+
+
+# Хендлер на команду /admin
+@dp.message_handler(Command("admin"))
+async def show_admin_menu(message: types.Message):
+    # Клавиатуру формируем с помощью следующей функции с аргументом администратор
+    markup = await admin_keyboard()
+    await message.answer("Меню администратора", reply_markup=markup)
+
+#Функции с категориями, подкатегориями и товарами редактирования
+async def list_categories_edit(callback: CallbackQuery, **kwargs):
+    markup = await categories_keyboard("edit")
+    text = "Меню редактирования товара"
+    await callback.message.edit_text(text=text, reply_markup=markup)
+
+async def list_subcategories_edit(callback: CallbackQuery, category, **kwargs):
+    markup = await subcategories_keyboard(category, "edit")
+    await callback.message.edit_reply_markup(markup)
+
+async def list_items_edit(callback: CallbackQuery, category, subcategory, **kwargs):
+    markup = await items_keyboard(category, subcategory, "edit")
+    await callback.message.edit_reply_markup(markup)
+
+async def show_item_edit(callback: CallbackQuery, category, subcategory, item_id):
+    markup = item_keyboard(category, subcategory, item_id, "edit")
+    item = await get_item(item_id)
+    text = f"Здесь будет меню редактирования товара"
+    await callback.message.edit_text(text=text, reply_markup=markup)
