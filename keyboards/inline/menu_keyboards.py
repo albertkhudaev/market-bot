@@ -48,8 +48,8 @@ async def categories_keyboard(user):
     if user == "edit":
         markup.row(
         InlineKeyboardButton(
-            text="Назад",
-            callback_data=make_callback_data(level=99))
+            text="Выход",
+            callback_data=make_callback_data(level=0))
     )
     #await bot.send_message(chat_id=admin_id, text=make_callback_data(level=10))
     #await bot.send_message(chat_id=admin_id, text=CURRENT_LEVEL)

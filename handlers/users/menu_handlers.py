@@ -91,7 +91,7 @@ async def navigate(call: CallbackQuery, callback_data: dict):
         "11": list_subcategories_edit,
         "12": list_items_edit,
         "13": show_item_edit,
-        "99": admin_keyboard  # Предлагаем купить товар
+        "99": admin_keyboard # Предлагаем купить товар
     }
 
     # Забираем нужную функцию для выбранного уровня
