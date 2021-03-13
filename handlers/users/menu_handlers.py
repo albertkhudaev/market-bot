@@ -96,8 +96,8 @@ async def navigate(call: CallbackQuery, callback_data: dict):
         "12": list_items_edit,
         "13": show_item_edit,
         "14": edit_name,
-        #"15": edit_price,
-        #"16": edit_description,
+        "15": edit_price,
+        "16": edit_description,
         "99": admin_keyboard
     }
 
@@ -149,17 +149,44 @@ async def show_item_edit(message: Union[CallbackQuery, Message], category, subca
     
 
 async def edit_name(callback: CallbackQuery, category, subcategory, item_id):
-    await callback.message.answer(text="Введите новое имя")
+    await callback.message.answer(text="Введите новое имя:")
     await EditState.name.set()
     state = Dispatcher.get_current().current_state()
     await state.update_data(category=category, subcategory=subcategory, item_id=item_id)
 
 @dp.message_handler(state=EditState.name, content_types=types.ContentTypes.TEXT)
 async def edit_name_handler(message: types.Message, state: FSMContext):
-    await state.update_data(new_name=message.text)
     data = await state.get_data()
     item = await get_item(data['item_id'])
     await item.update(name=message.text).apply()
+    await state.finish()
+    await show_item_edit(message, data['category'], data['subcategory'], data['item_id'])
+
+async def edit_price(callback: CallbackQuery, category, subcategory, item_id):
+    await callback.message.answer(text="Введите новую цену:")
+    await EditState.price.set()
+    state = Dispatcher.get_current().current_state()
+    await state.update_data(category=category, subcategory=subcategory, item_id=item_id)
+
+@dp.message_handler(state=EditState.price, content_types=types.ContentTypes.TEXT)
+async def edit_price_handler(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    item = await get_item(data['item_id'])
+    await item.update(price=int(message.text)).apply()
+    await state.finish()
+    await show_item_edit(message, data['category'], data['subcategory'], data['item_id'])
+
+async def edit_description(callback: CallbackQuery, category, subcategory, item_id):
+    await callback.message.answer(text="Введите новое описание:")
+    await EditState.description.set()
+    state = Dispatcher.get_current().current_state()
+    await state.update_data(category=category, subcategory=subcategory, item_id=item_id)
+
+@dp.message_handler(state=EditState.description, content_types=types.ContentTypes.TEXT)
+async def edit_description_handler(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    item = await get_item(data['item_id'])
+    await item.update(description=message.text).apply()
     await state.finish()
     await show_item_edit(message, data['category'], data['subcategory'], data['item_id'])
 

@@ -183,14 +183,16 @@ def item_edit_keyboard(category, subcategory, item_id, name, price, description)
     markup.row(
         InlineKeyboardButton(
             text=price,
-            callback_data=buy_item.new(item_id=item_id)
+            callback_data=make_callback_data(level=15,
+                                             category=category, subcategory=subcategory, item_id=item_id)
         )
     )
 
     markup.row(
         InlineKeyboardButton(
             text=description,
-            callback_data=buy_item.new(item_id=item_id)
+            callback_data=make_callback_data(level=16,
+                                             category=category, subcategory=subcategory, item_id=item_id)
         )
     )
 
