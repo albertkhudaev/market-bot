@@ -1,13 +1,17 @@
 from typing import Union
 
-from aiogram import types
+from aiogram import types, Dispatcher
+from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher.filters import Command
+from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
 
+from states import EditState
 from keyboards.inline.menu_keyboards import menu_cd, categories_keyboard, subcategories_keyboard, \
     items_keyboard, item_keyboard, admin_keyboard, item_edit_keyboard
 from loader import dp
 from utils.db_api.db_commands import get_item
+from loader import storage
 
 
 # Хендлер на команду /menu
@@ -83,15 +87,18 @@ async def navigate(call: CallbackQuery, callback_data: dict):
 
     # Прописываем "уровни" в которых будут отправляться новые кнопки пользователю
     levels = {
-        "0": list_categories,  # Отдаем категории
-        "1": list_subcategories,  # Отдаем подкатегории
-        "2": list_items,  # Отдаем товары
+        "0": list_categories,
+        "1": list_subcategories, 
+        "2": list_items,
         "3": show_item,
         "10": list_categories_edit,
         "11": list_subcategories_edit,
         "12": list_items_edit,
         "13": show_item_edit,
-        "99": admin_keyboard # Предлагаем купить товар
+        "14": edit_name,
+        #"15": edit_price,
+        #"16": edit_description,
+        "99": admin_keyboard
     }
 
     # Забираем нужную функцию для выбранного уровня
@@ -127,11 +134,32 @@ async def list_items_edit(callback: CallbackQuery, category, subcategory, **kwar
     markup = await items_keyboard(category, subcategory, "edit")
     await callback.message.edit_reply_markup(markup)
 
-async def show_item_edit(callback: CallbackQuery, category, subcategory, item_id):
+async def show_item_edit(message: Union[CallbackQuery, Message], category, subcategory, item_id):
     item = await get_item(item_id)
     name = f"{item.name}"
     price = f"{item.price}"
     description = f"{item.description}"
     markup = item_edit_keyboard(category, subcategory, item_id, name, price, description)
-    text = f"Редактирование {item.name}"
-    await callback.message.edit_text(text=text, reply_markup=markup)
+    if isinstance(message, Message):
+        await message.answer(f"Редактирование {item.name}", reply_markup=markup)
+    elif isinstance(message, CallbackQuery):
+        callback = message
+        text = f"Редактирование {item.name}"
+        await callback.message.edit_text(text=text, reply_markup=markup)
+    
+
+async def edit_name(callback: CallbackQuery, category, subcategory, item_id):
+    await callback.message.answer(text="Введите новое имя")
+    await EditState.name.set()
+    state = Dispatcher.get_current().current_state()
+    await state.update_data(category=category, subcategory=subcategory, item_id=item_id)
+
+@dp.message_handler(state=EditState.name, content_types=types.ContentTypes.TEXT)
+async def edit_name_handler(message: types.Message, state: FSMContext):
+    await state.update_data(new_name=message.text)
+    data = await state.get_data()
+    item = await get_item(data['item_id'])
+    await item.update(name=message.text).apply()
+    await state.finish()
+    await show_item_edit(message, data['category'], data['subcategory'], data['item_id'])
+
