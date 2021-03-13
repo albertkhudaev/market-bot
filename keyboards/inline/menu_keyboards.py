@@ -44,8 +44,15 @@ async def categories_keyboard(user):
         markup.insert(
             InlineKeyboardButton(text=button_text, callback_data=callback_data)
         )
-    await bot.send_message(chat_id=admin_id, text=make_callback_data(level=10))
-    await bot.send_message(chat_id=admin_id, text=CURRENT_LEVEL)
+    # Если меню администратора - добавляем возможность выхода в меню магазина
+    if user == "edit":
+        markup.row(
+        InlineKeyboardButton(
+            text="Назад",
+            callback_data=make_callback_data(level=99))
+    )
+    #await bot.send_message(chat_id=admin_id, text=make_callback_data(level=10))
+    #await bot.send_message(chat_id=admin_id, text=CURRENT_LEVEL)
     # Возвращаем созданную клавиатуру в хендлер
     return markup
 

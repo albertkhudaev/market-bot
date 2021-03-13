@@ -26,12 +26,12 @@ async def list_categories(message: Union[CallbackQuery, Message], **kwargs):
 
     # Проверяем, что за тип апдейта. Если Message - отправляем новое сообщение
     if isinstance(message, Message):
-        await message.answer("Смотри, что у нас есть", reply_markup=markup)
+        await message.answer("Меню магазина", reply_markup=markup)
 
     # Если CallbackQuery - изменяем это сообщение
     elif isinstance(message, CallbackQuery):
         call = message
-        await call.message.edit_reply_markup(markup)
+        await call.message.edit_text(text="Меню магазина", reply_markup=markup)
 
 
 # Функция, которая отдает кнопки с подкатегориями, по выбранной пользователем категории
@@ -47,7 +47,7 @@ async def list_items(callback: CallbackQuery, category, subcategory, **kwargs):
     markup = await items_keyboard(category, subcategory, "customer")
 
     # Изменяем сообщение, и отправляем новые кнопки с подкатегориями
-    await callback.message.edit_text(text="Смотри, что у нас есть", reply_markup=markup)
+    await callback.message.edit_text(text="Меню магазина", reply_markup=markup)
 
 
 # Функция, которая отдает уже кнопку Купить товар по выбранному товару
