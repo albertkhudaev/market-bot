@@ -5,7 +5,7 @@ from aiogram.dispatcher.filters import Command
 from aiogram.types import CallbackQuery, Message
 
 from keyboards.inline.menu_keyboards import menu_cd, categories_keyboard, subcategories_keyboard, \
-    items_keyboard, item_keyboard, admin_keyboard
+    items_keyboard, item_keyboard, admin_keyboard, item_edit_keyboard
 from loader import dp
 from utils.db_api.db_commands import get_item
 
@@ -128,7 +128,10 @@ async def list_items_edit(callback: CallbackQuery, category, subcategory, **kwar
     await callback.message.edit_reply_markup(markup)
 
 async def show_item_edit(callback: CallbackQuery, category, subcategory, item_id):
-    markup = item_keyboard(category, subcategory, item_id, "edit")
     item = await get_item(item_id)
-    text = f"Здесь будет меню редактирования товара"
+    name = f"{item.name}"
+    price = f"{item.price}"
+    description = f"{item.description}"
+    markup = item_edit_keyboard(category, subcategory, item_id, name, price, description)
+    text = f"Редактирование {item.name}"
     await callback.message.edit_text(text=text, reply_markup=markup)

@@ -136,9 +136,6 @@ def item_keyboard(category, subcategory, item_id, user):
     # Указываем, что текущий уровень меню - 3, при заходе обычным пользователем
     if user == "customer":
         CURRENT_LEVEL = 3
-    # Указываем, что текущий уровень меню - 13, при заходе с редактированием
-    elif user == "edit":
-        CURRENT_LEVEL = 13
     markup = InlineKeyboardMarkup()
     markup.row(
         InlineKeyboardButton(
@@ -171,3 +168,41 @@ async def admin_keyboard():
     )
     return markup
 
+def item_edit_keyboard(category, subcategory, item_id, name, price, description):
+    # Указываем, что текущий уровень меню - 13
+    CURRENT_LEVEL = 13
+    markup = InlineKeyboardMarkup()
+    markup.row(
+        InlineKeyboardButton(
+            text=name,
+            callback_data=buy_item.new(item_id=item_id)
+        )
+    )
+
+    markup.row(
+        InlineKeyboardButton(
+            text=price,
+            callback_data=buy_item.new(item_id=item_id)
+        )
+    )
+
+    markup.row(
+        InlineKeyboardButton(
+            text=description,
+            callback_data=buy_item.new(item_id=item_id)
+        )
+    )
+
+    markup.row(
+        InlineKeyboardButton(
+            text="Назад",
+            callback_data=make_callback_data(level=CURRENT_LEVEL - 1,
+                                             category=category, subcategory=subcategory, item_id=item_id))
+    )
+
+    markup.row(
+        InlineKeyboardButton(
+            text="Выход",
+            callback_data=make_callback_data(level=0))
+    )
+    return markup

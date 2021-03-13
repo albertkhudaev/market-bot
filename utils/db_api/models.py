@@ -28,6 +28,9 @@ class Item(db.Model):
     photo = Column(String(250))
     price = Column(Integer)
 
+    # Описание товара
+    description = Column(String(150))
+
     def __repr__(self):
         return f"""
 Товар № {self.id} - "{self.name}"
