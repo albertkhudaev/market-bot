@@ -51,3 +51,8 @@ async def get_items(category_code, subcategory_code) -> List[Item]:
 async def get_item(item_id) -> Item:
     item = await Item.query.where(Item.id == item_id).gino.first()
     return item
+
+# Подсчёт всех товаров
+async def count_all():
+    count = await db.func.count(Item.id).gino.scalar()
+    return count
