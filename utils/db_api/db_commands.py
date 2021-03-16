@@ -8,7 +8,7 @@ from utils.db_api.database import db
 
 # Функция для создания нового товара в базе данных. Принимает все возможные аргументы, прописанные в Item
 async def add_item(**kwargs):
-    new_item = await Item(**kwargs).create()
+    new_item = await Item.create(**kwargs)
     return new_item
 
 

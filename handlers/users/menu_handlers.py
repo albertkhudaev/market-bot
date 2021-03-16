@@ -10,7 +10,7 @@ from states import EditState
 from keyboards.inline.menu_keyboards import menu_cd, categories_keyboard, subcategories_keyboard, \
     items_keyboard, item_keyboard, admin_keyboard, item_edit_keyboard
 from loader import dp
-from utils.db_api.db_commands import get_item
+from utils.db_api.db_commands import get_item, count_all, get_items, add_item
 from loader import storage
 
 
@@ -98,6 +98,9 @@ async def navigate(call: CallbackQuery, callback_data: dict):
         "14": edit_name,
         "15": edit_price,
         "16": edit_description,
+        "20": list_categories_new,
+        "21": list_subcategories_new,
+        #"22": new_item,
         "99": admin_keyboard
     }
 
@@ -134,7 +137,17 @@ async def list_items_edit(callback: CallbackQuery, category, subcategory, **kwar
     markup = await items_keyboard(category, subcategory, "edit")
     await callback.message.edit_reply_markup(markup)
 
+#Функции для редактирования товара
 async def show_item_edit(message: Union[CallbackQuery, Message], category, subcategory, item_id):
+    items = await count_all()
+    if item_id > items:
+        itemz = await get_items(category, subcategory)
+        item = itemz[1]
+        await add_item(id=(items + 1), name=" ",
+                   category_name=f"{item.category_name}", category_code=f"{item.category_code}",
+                   subcategory_name=f"{item.subcategory_name}", subcategory_code=f"{item.subcategory_code}",
+                   price=1, photo="-", description="Описание товара")
+        item_id = items + 1
     item = await get_item(item_id)
     name = f"{item.name}"
     price = f"{item.price}"
@@ -190,3 +203,15 @@ async def edit_description_handler(message: types.Message, state: FSMContext):
     await state.finish()
     await show_item_edit(message, data['category'], data['subcategory'], data['item_id'])
 
+# Функции с категориями, подкатегориями и товарами для создания товара
+
+async def list_categories_new(callback: CallbackQuery, **kwargs):
+    markup = await categories_keyboard("new")
+    text = "Меню редактирования товара"
+    await callback.message.edit_text(text=text, reply_markup=markup)
+
+async def list_subcategories_new(callback: CallbackQuery, category, **kwargs):
+    markup = await subcategories_keyboard(category, "new")
+    await callback.message.edit_reply_markup(markup)
+
+#async def new_item(callback: CallbackQuery, category, subcategory, **kwargs):

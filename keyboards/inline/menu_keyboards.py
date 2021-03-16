@@ -3,7 +3,7 @@ from data.config import admin_id
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from aiogram.utils.callback_data import CallbackData
 
-from utils.db_api.db_commands import get_subcategories, count_items, get_items, get_categories
+from utils.db_api.db_commands import get_subcategories, count_items, get_items, get_categories, count_all
 
 # Создаем CallbackData-объекты, которые будут нужны для работы с менюшкой
 menu_cd = CallbackData("show_menu", "level", "category", "subcategory", "item_id")
@@ -21,9 +21,12 @@ async def categories_keyboard(user):
     # Указываем, что текущий уровень меню - 0, при заходе обычным пользователем
     if user == "customer":
         CURRENT_LEVEL = 0
-    # Указываем, что текущий уровень меню - 0, при заходе с редактированием
+    # Указываем, что текущий уровень меню - 10, при заходе с редактированием
     elif user == "edit":
         CURRENT_LEVEL = 10
+    # Указываем, что текущий уровень меню - 20, при заходе с созданием
+    elif user == "new":
+        CURRENT_LEVEL = 20
 
     # Создаем Клавиатуру
     markup = InlineKeyboardMarkup()
@@ -44,8 +47,16 @@ async def categories_keyboard(user):
         markup.insert(
             InlineKeyboardButton(text=button_text, callback_data=callback_data)
         )
+    
+    if user == "new":
+        markup.row(
+        InlineKeyboardButton(
+            text="Создать категорию",
+            callback_data=make_callback_data(level=0))
+    )
+    
     # Если меню администратора - добавляем возможность выхода в меню магазина
-    if user == "edit":
+    if user == "edit" or user == "new":
         markup.row(
         InlineKeyboardButton(
             text="Выход",
@@ -65,6 +76,11 @@ async def subcategories_keyboard(category, user):
     # Указываем, что текущий уровень меню - 11, при заходе с редактированием
     elif user == "edit":
         CURRENT_LEVEL = 11
+    # Указываем, что текущий уровень меню - 21, при заходе с созданием
+    elif user == "new":
+        CURRENT_LEVEL = 21
+        items = await count_all()
+        print(items, "#################################################################")
     markup = InlineKeyboardMarkup()
 
     # Забираем список товаров с РАЗНЫМИ подкатегориями из базы данных с учетом выбранной категории и проходим по ним
@@ -77,12 +93,25 @@ async def subcategories_keyboard(category, user):
         button_text = f"{subcategory.subcategory_name} ({number_of_items} шт)"
 
         # Сформируем колбек дату, которая будет на кнопке
-        callback_data = make_callback_data(level=CURRENT_LEVEL + 1,
-                                           category=category, subcategory=subcategory.subcategory_code)
+        if user == "new":
+            callback_data = make_callback_data(level=13,
+                                            category=category, subcategory=subcategory.subcategory_code,
+                                            item_id=items + 1)
+        else:
+            callback_data = make_callback_data(level=CURRENT_LEVEL + 1,
+                                            category=category, subcategory=subcategory.subcategory_code)
         markup.insert(
             InlineKeyboardButton(text=button_text, callback_data=callback_data)
         )
 
+    # кнопка для создания новой категории, если режим редактирования включен
+    if user == "new":
+        markup.row(
+        InlineKeyboardButton(
+            text="Создать подкатегорию",
+            callback_data=make_callback_data(level=0))
+        )
+    
     # Создаем Кнопку "Назад", в которой прописываем колбек дату такую, которая возвращает
     # пользователя на уровень назад - на уровень 0.
     markup.row(
@@ -161,6 +190,9 @@ async def admin_keyboard():
             InlineKeyboardButton(text="Редактировать товар", callback_data=make_callback_data(level=10))
             #InlineKeyboardButton(text="Добавить товар", callback_data=make_callback_data(level=20))
         )
+    markup.row(
+            InlineKeyboardButton(text="Добавить товар", callback_data=make_callback_data(level=20))
+    )
     markup.row(
         InlineKeyboardButton(
             text="Выход",
