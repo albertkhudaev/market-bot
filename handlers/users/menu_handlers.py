@@ -6,12 +6,13 @@ from aiogram.dispatcher.filters import Command
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from states import EditState
+from states import EditState, NewState
 from keyboards.inline.menu_keyboards import menu_cd, categories_keyboard, subcategories_keyboard, \
     items_keyboard, item_keyboard, admin_keyboard, item_edit_keyboard
 from loader import dp
 from utils.db_api.db_commands import get_item, count_all, get_items, add_item
 from loader import storage
+from utils.misc.translate import codeformer
 
 
 # Хендлер на команду /menu
@@ -39,8 +40,8 @@ async def list_categories(message: Union[CallbackQuery, Message], **kwargs):
 
 
 # Функция, которая отдает кнопки с подкатегориями, по выбранной пользователем категории
-async def list_subcategories(callback: CallbackQuery, category, **kwargs):
-    markup = await subcategories_keyboard(category, "customer")
+async def list_subcategories(callback: CallbackQuery, category, cat_name, **kwargs):
+    markup = await subcategories_keyboard(category, cat_name, "customer")
 
     # Изменяем сообщение, и отправляем новые кнопки с подкатегориями
     await callback.message.edit_reply_markup(markup)
@@ -79,11 +80,17 @@ async def navigate(call: CallbackQuery, callback_data: dict):
     # Получаем категорию, которую выбрал пользователь (Передается всегда)
     category = callback_data.get("category")
 
+    cat_name = callback_data.get("cat_name")
+
     # Получаем подкатегорию, которую выбрал пользователь (Передается НЕ ВСЕГДА - может быть 0)
     subcategory = callback_data.get("subcategory")
 
+    subcat_name = callback_data.get("subcat_name")
+
     # Получаем айди товара, который выбрал пользователь (Передается НЕ ВСЕГДА - может быть 0)
     item_id = int(callback_data.get("item_id"))
+
+    new = callback_data.get("new")
 
     # Прописываем "уровни" в которых будут отправляться новые кнопки пользователю
     levels = {
@@ -100,7 +107,8 @@ async def navigate(call: CallbackQuery, callback_data: dict):
         "16": edit_description,
         "20": list_categories_new,
         "21": list_subcategories_new,
-        #"22": new_item,
+        "22": new_category,
+        "23": new_subcategory,
         "99": admin_keyboard
     }
 
@@ -111,8 +119,11 @@ async def navigate(call: CallbackQuery, callback_data: dict):
     await current_level_function(
         call,
         category=category,
+        cat_name=cat_name,
         subcategory=subcategory,
-        item_id=item_id
+        subcat_name=subcat_name,
+        item_id=item_id,
+        new=new
     )
 
 
@@ -129,8 +140,8 @@ async def list_categories_edit(callback: CallbackQuery, **kwargs):
     text = "Меню редактирования товара"
     await callback.message.edit_text(text=text, reply_markup=markup)
 
-async def list_subcategories_edit(callback: CallbackQuery, category, **kwargs):
-    markup = await subcategories_keyboard(category, "edit")
+async def list_subcategories_edit(callback: CallbackQuery, category, cat_name, **kwargs):
+    markup = await subcategories_keyboard(category, cat_name, "edit")
     await callback.message.edit_reply_markup(markup)
 
 async def list_items_edit(callback: CallbackQuery, category, subcategory, **kwargs):
@@ -138,14 +149,24 @@ async def list_items_edit(callback: CallbackQuery, category, subcategory, **kwar
     await callback.message.edit_reply_markup(markup)
 
 #Функции для редактирования товара
-async def show_item_edit(message: Union[CallbackQuery, Message], category, subcategory, item_id):
+async def show_item_edit(message: Union[CallbackQuery, Message], category, cat_name, subcategory, subcat_name, item_id, new):
     items = await count_all()
     if item_id > items:
-        itemz = await get_items(category, subcategory)
-        item = itemz[1]
+        if new:
+            category_name = cat_name
+            category_code = category
+            subcategory_name = subcat_name
+            subcategory_code = subcategory
+        else:
+            itemz = await get_items(category, subcategory)
+            item = itemz[1]
+            category_name = f"{item.category_name}"
+            category_code = f"{item.category_code}"
+            subcategory_name = f"{item.subcategory_name}"
+            subcategory_code = f"{item.subcategory_code}"
         await add_item(id=(items + 1), name=" ",
-                   category_name=f"{item.category_name}", category_code=f"{item.category_code}",
-                   subcategory_name=f"{item.subcategory_name}", subcategory_code=f"{item.subcategory_code}",
+                   category_name=category_name, category_code=category_code,
+                   subcategory_name=subcategory_name, subcategory_code=subcategory_code,
                    price=1, photo="-", description="Описание товара")
         item_id = items + 1
     item = await get_item(item_id)
@@ -161,11 +182,11 @@ async def show_item_edit(message: Union[CallbackQuery, Message], category, subca
         await callback.message.edit_text(text=text, reply_markup=markup)
     
 
-async def edit_name(callback: CallbackQuery, category, subcategory, item_id):
+async def edit_name(callback: CallbackQuery, category, cat_name, subcategory, subcat_name, item_id, new):
     await callback.message.answer(text="Введите новое имя:")
     await EditState.name.set()
     state = Dispatcher.get_current().current_state()
-    await state.update_data(category=category, subcategory=subcategory, item_id=item_id)
+    await state.update_data(category=category, cat_name=cat_name, subcategory=subcategory, subcat_name=subcat_name, item_id=item_id, new=new)
 
 @dp.message_handler(state=EditState.name, content_types=types.ContentTypes.TEXT)
 async def edit_name_handler(message: types.Message, state: FSMContext):
@@ -173,13 +194,13 @@ async def edit_name_handler(message: types.Message, state: FSMContext):
     item = await get_item(data['item_id'])
     await item.update(name=message.text).apply()
     await state.finish()
-    await show_item_edit(message, data['category'], data['subcategory'], data['item_id'])
+    await show_item_edit(message, data['category'], data['cat_name'], data['subcategory'], data['subcat_name'], data['item_id'], data['new'])
 
-async def edit_price(callback: CallbackQuery, category, subcategory, item_id):
+async def edit_price(callback: CallbackQuery, category, cat_name, subcategory, subcat_name, item_id, new):
     await callback.message.answer(text="Введите новую цену:")
     await EditState.price.set()
     state = Dispatcher.get_current().current_state()
-    await state.update_data(category=category, subcategory=subcategory, item_id=item_id)
+    await state.update_data(category=category, cat_name=cat_name, subcategory=subcategory, subcat_name=subcat_name, item_id=item_id, new=new)
 
 @dp.message_handler(state=EditState.price, content_types=types.ContentTypes.TEXT)
 async def edit_price_handler(message: types.Message, state: FSMContext):
@@ -187,13 +208,13 @@ async def edit_price_handler(message: types.Message, state: FSMContext):
     item = await get_item(data['item_id'])
     await item.update(price=int(message.text)).apply()
     await state.finish()
-    await show_item_edit(message, data['category'], data['subcategory'], data['item_id'])
+    await show_item_edit(message, data['category'], data['cat_name'], data['subcategory'], data['subcat_name'], data['item_id'], data['new'])
 
-async def edit_description(callback: CallbackQuery, category, subcategory, item_id):
+async def edit_description(callback: CallbackQuery, category, cat_name, subcategory, subcat_name, item_id, new):
     await callback.message.answer(text="Введите новое описание:")
     await EditState.description.set()
     state = Dispatcher.get_current().current_state()
-    await state.update_data(category=category, subcategory=subcategory, item_id=item_id)
+    await state.update_data(category=category, cat_name=cat_name, subcategory=subcategory, subcat_name=subcat_name, item_id=item_id, new=new)
 
 @dp.message_handler(state=EditState.description, content_types=types.ContentTypes.TEXT)
 async def edit_description_handler(message: types.Message, state: FSMContext):
@@ -201,7 +222,7 @@ async def edit_description_handler(message: types.Message, state: FSMContext):
     item = await get_item(data['item_id'])
     await item.update(description=message.text).apply()
     await state.finish()
-    await show_item_edit(message, data['category'], data['subcategory'], data['item_id'])
+    await show_item_edit(message, data['category'], data['cat_name'], data['subcategory'], data['subcat_name'], data['item_id'], data['new'])
 
 # Функции с категориями, подкатегориями и товарами для создания товара
 
@@ -210,8 +231,36 @@ async def list_categories_new(callback: CallbackQuery, **kwargs):
     text = "Меню редактирования товара"
     await callback.message.edit_text(text=text, reply_markup=markup)
 
-async def list_subcategories_new(callback: CallbackQuery, category, **kwargs):
-    markup = await subcategories_keyboard(category, "new")
+async def list_subcategories_new(callback: CallbackQuery, category, cat_name, **kwargs):
+    markup = await subcategories_keyboard(category, cat_name, "new")
     await callback.message.edit_reply_markup(markup)
 
-#async def new_item(callback: CallbackQuery, category, subcategory, **kwargs):
+async def new_category(callback: CallbackQuery, **kwargs):
+    await callback.message.answer(text="Введите имя категории:")
+    await NewState.newcat.set()
+
+@dp.message_handler(state=NewState.newcat, content_types=types.ContentTypes.TEXT)
+async def new_category_handler(message: types.Message, state: FSMContext):
+    cat_name = str(message.text)
+    category = await codeformer(message.text, "category")
+    await state.finish()
+    await new_subcategory(message, category, cat_name)
+
+async def new_subcategory(message: Union[CallbackQuery, Message], category, cat_name, **kwargs):
+    if isinstance(message, Message):
+        await message.answer("Введите имя подкатегории")
+    elif isinstance(message, CallbackQuery):
+        await message.message.answer(text="Введите имя подкатегории:")
+    await NewState.newsubcat.set()
+    state = Dispatcher.get_current().current_state()
+    await state.update_data(category=category, cat_name=cat_name)
+
+@dp.message_handler(state=NewState.newsubcat, content_types=types.ContentTypes.TEXT)
+async def new_category_handler(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    subcat_name = str(message.text)
+    subcategory = await codeformer(message.text, "subcategory", category=data['category'])
+    item_id = (await count_all()) + 1
+    new = True
+    await state.finish()
+    await show_item_edit(message, data['category'], data['cat_name'], subcategory, subcat_name, item_id, new)

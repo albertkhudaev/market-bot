@@ -5,3 +5,7 @@ class EditState(StatesGroup):
     name = State()
     price = State()
     description = State()
+
+class NewState(StatesGroup):
+    newcat = State()
+    newsubcat = State()

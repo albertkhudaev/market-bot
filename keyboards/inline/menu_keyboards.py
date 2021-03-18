@@ -6,14 +6,14 @@ from aiogram.utils.callback_data import CallbackData
 from utils.db_api.db_commands import get_subcategories, count_items, get_items, get_categories, count_all
 
 # Создаем CallbackData-объекты, которые будут нужны для работы с менюшкой
-menu_cd = CallbackData("show_menu", "level", "category", "subcategory", "item_id")
+menu_cd = CallbackData("show_menu", "level", "category", "subcategory", "item_id", "cat_name", "subcat_name")
 buy_item = CallbackData("buy", "item_id")
 
 
 # С помощью этой функции будем формировать коллбек дату для каждого элемента меню, в зависимости от
 # переданных параметров. Если Подкатегория, или айди товара не выбраны - они по умолчанию равны нулю
-def make_callback_data(level, category="0", subcategory="0", item_id="0"):
-    return menu_cd.new(level=level, category=category, subcategory=subcategory, item_id=item_id)
+def make_callback_data(level, category="0", subcategory="0", item_id="0", cat_name="0", subcat_name="0", new=False):
+    return menu_cd.new(level=level, category=category, cat_name=cat_name, subcategory=subcategory, subcat_name=subcat_name, item_id=item_id)
 
 
 # Создаем функцию, которая отдает клавиатуру с доступными категориями
@@ -41,7 +41,7 @@ async def categories_keyboard(user):
         button_text = f"{category.category_name} ({number_of_items} шт)"
 
         # Сформируем колбек дату, которая будет на кнопке. Следующий уровень - текущий + 1, и перечисляем категории
-        callback_data = make_callback_data(level=CURRENT_LEVEL + 1, category=category.category_code)
+        callback_data = make_callback_data(level=CURRENT_LEVEL + 1, category=category.category_code, cat_name=f"{category.category_name}")
 
         # Вставляем кнопку в клавиатуру
         markup.insert(
@@ -52,7 +52,7 @@ async def categories_keyboard(user):
         markup.row(
         InlineKeyboardButton(
             text="Создать категорию",
-            callback_data=make_callback_data(level=0))
+            callback_data=make_callback_data(level=22))
     )
     
     # Если меню администратора - добавляем возможность выхода в меню магазина
@@ -69,7 +69,7 @@ async def categories_keyboard(user):
 
 
 # Создаем функцию, которая отдает клавиатуру с доступными подкатегориями, исходя из выбранной категории
-async def subcategories_keyboard(category, user):
+async def subcategories_keyboard(category, cat_name, user):
     # Указываем, что текущий уровень меню - 1, при заходе обычным пользователем
     if user == "customer":
         CURRENT_LEVEL = 1
@@ -80,7 +80,6 @@ async def subcategories_keyboard(category, user):
     elif user == "new":
         CURRENT_LEVEL = 21
         items = await count_all()
-        print(items, "#################################################################")
     markup = InlineKeyboardMarkup()
 
     # Забираем список товаров с РАЗНЫМИ подкатегориями из базы данных с учетом выбранной категории и проходим по ним
@@ -95,11 +94,11 @@ async def subcategories_keyboard(category, user):
         # Сформируем колбек дату, которая будет на кнопке
         if user == "new":
             callback_data = make_callback_data(level=13,
-                                            category=category, subcategory=subcategory.subcategory_code,
+                                            category=category, cat_name=cat_name, subcategory=subcategory.subcategory_code,
                                             item_id=items + 1)
         else:
             callback_data = make_callback_data(level=CURRENT_LEVEL + 1,
-                                            category=category, subcategory=subcategory.subcategory_code)
+                                            category=category, cat_name=cat_name, subcategory=subcategory.subcategory_code)
         markup.insert(
             InlineKeyboardButton(text=button_text, callback_data=callback_data)
         )
@@ -109,7 +108,7 @@ async def subcategories_keyboard(category, user):
         markup.row(
         InlineKeyboardButton(
             text="Создать подкатегорию",
-            callback_data=make_callback_data(level=0))
+            callback_data=make_callback_data(level=23, category=category, cat_name=cat_name))
         )
     
     # Создаем Кнопку "Назад", в которой прописываем колбек дату такую, которая возвращает
