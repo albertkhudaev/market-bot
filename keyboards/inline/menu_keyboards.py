@@ -44,7 +44,7 @@ async def categories_keyboard(user):
         callback_data = make_callback_data(level=CURRENT_LEVEL + 1, category=category.category_code, cat_name=f"{category.category_name}")
 
         # Вставляем кнопку в клавиатуру
-        markup.insert(
+        markup.row(
             InlineKeyboardButton(text=button_text, callback_data=callback_data)
         )
     
@@ -99,7 +99,7 @@ async def subcategories_keyboard(category, cat_name, user):
         else:
             callback_data = make_callback_data(level=CURRENT_LEVEL + 1,
                                             category=category, cat_name=cat_name, subcategory=subcategory.subcategory_code)
-        markup.insert(
+        markup.row(
             InlineKeyboardButton(text=button_text, callback_data=callback_data)
         )
 
@@ -143,7 +143,7 @@ async def items_keyboard(category, subcategory, user):
         callback_data = make_callback_data(level=CURRENT_LEVEL + 1,
                                            category=category, subcategory=subcategory,
                                            item_id=item.id)
-        markup.insert(
+        markup.row(
             InlineKeyboardButton(
                 text=button_text, callback_data=callback_data)
         )
@@ -185,7 +185,7 @@ async def admin_keyboard():
     CURRENT_LEVEL = 99
     # Создаем Клавиатуру
     markup = InlineKeyboardMarkup()
-    markup.insert(
+    markup.row(
             InlineKeyboardButton(text="Редактировать товар", callback_data=make_callback_data(level=10))
             #InlineKeyboardButton(text="Добавить товар", callback_data=make_callback_data(level=20))
         )
