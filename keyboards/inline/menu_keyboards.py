@@ -199,7 +199,7 @@ async def admin_keyboard():
     )
     return markup
 
-def item_edit_keyboard(category, subcategory, item_id, name, price, description):
+def item_edit_keyboard(category, subcategory, item_id, name, price, description, photo):
     # Указываем, что текущий уровень меню - 13
     CURRENT_LEVEL = 13
     markup = InlineKeyboardMarkup()
@@ -223,6 +223,14 @@ def item_edit_keyboard(category, subcategory, item_id, name, price, description)
         InlineKeyboardButton(
             text=description,
             callback_data=make_callback_data(level=16,
+                                             category=category, subcategory=subcategory, item_id=item_id)
+        )
+    )
+
+    markup.row(
+        InlineKeyboardButton(
+            text=photo,
+            callback_data=make_callback_data(level=17,
                                              category=category, subcategory=subcategory, item_id=item_id)
         )
     )

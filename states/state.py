@@ -5,6 +5,7 @@ class EditState(StatesGroup):
     name = State()
     price = State()
     description = State()
+    photo = State()
 
 class NewState(StatesGroup):
     newcat = State()
