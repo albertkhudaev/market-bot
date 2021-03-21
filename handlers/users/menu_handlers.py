@@ -180,9 +180,7 @@ async def show_item_edit(message: Union[CallbackQuery, Message, InputMediaPhoto]
         all_items = await get_all_items()
         for item in all_items:
             all_id.append(item.id)
-        print(all_id, "###################")
         next_id = get_id(1, all_id)
-        print(next_id, '##################')
         await add_item(id=next_id, name=" ",
                    category_name=category_name, category_code=category_code,
                    subcategory_name=subcategory_name, subcategory_code=subcategory_code,
