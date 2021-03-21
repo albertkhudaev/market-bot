@@ -13,3 +13,4 @@ class NewState(StatesGroup):
 
 class NewAdminState(StatesGroup):
     newadmin = State()
+    deladmin = State()

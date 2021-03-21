@@ -68,7 +68,6 @@ async def show_item(callback: CallbackQuery, category, subcategory, item_id, **k
         markup = item_keyboard(category, subcategory, item_id, "photo")
         await callback.message.answer_photo(photo=photo, caption=text, reply_markup=markup)
     else:
-        print(photo, "#######################################################")
         markup = item_keyboard(category, subcategory, item_id, "customer")
         await callback.message.edit_text(text=text, reply_markup=markup)
 
@@ -124,6 +123,7 @@ async def navigate(call: CallbackQuery, callback_data: dict):
         "33": item_question_delete,
         "34": item_yes_delete,
         "80": admin_add,
+        "81": admin_del,
         "99": admin_panel
     }
 
@@ -145,18 +145,27 @@ async def navigate(call: CallbackQuery, callback_data: dict):
 # Хендлер на команду /admin
 @dp.message_handler(Command("admin"))
 async def show_admin_menu(message: Message):
-    # Клавиатуру формируем с помощью следующей функции с аргументом администратор
-    markup = await admin_keyboard()
-    await message.answer("Меню администратора", reply_markup=markup)
+    if str(message.chat.id) in admins:
+        # Клавиатуру формируем с помощью следующей функции с аргументом администратор
+        markup = await admin_keyboard()
+        await message.answer("Меню администратора", reply_markup=markup)
+    else:
+        await message.answer("Недостаточно прав")
 
 #Функции с категориями, подкатегориями и товарами редактирования
 async def list_categories_edit(callback: CallbackQuery, **kwargs):
-    markup = await categories_keyboard("edit")
-    await callback.message.edit_text(text="Меню редактирования товара", reply_markup=markup)
+    if str(callback.message.chat.id) in admins:
+        markup = await categories_keyboard("edit")
+        await callback.message.edit_text(text="Меню редактирования товара", reply_markup=markup)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 async def list_subcategories_edit(callback: CallbackQuery, category, cat_name, **kwargs):
-    markup = await subcategories_keyboard(category, cat_name, "edit")
-    await callback.message.edit_text(text="Меню редактирования товара", reply_markup=markup)
+    if str(callback.message.chat.id) in admins:
+        markup = await subcategories_keyboard(category, cat_name, "edit")
+        await callback.message.edit_text(text="Меню редактирования товара", reply_markup=markup)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 async def list_items_edit(callback: CallbackQuery, category, subcategory, **kwargs):
     markup = await items_keyboard(category, subcategory, "edit")
@@ -340,5 +349,22 @@ async def admin_add(callback: CallbackQuery, **kwargs):
 async def new_category_handler(message: types.Message, state: FSMContext):
     new_admin_id = str(message.text)
     admins.append(new_admin_id)
+    print(admins)
     await message.answer(text=f"Администратор с id {new_admin_id} добавлен!")
+    await state.finish()
+
+async def admin_del(callback: CallbackQuery, **kwargs):
+    if str(callback.message.chat.id) == super_id:
+        await callback.message.edit_text(text="Введите chat id администратора:")
+        await NewAdminState.deladmin.set()
+    else:
+        print(callback.message.chat.id)
+        await callback.message.edit_text(text="Недостаточно прав")
+
+@dp.message_handler(state=NewAdminState.deladmin, content_types=types.ContentTypes.TEXT)
+async def new_category_handler(message: types.Message, state: FSMContext):
+    new_admin_id = str(message.text)
+    admins.remove(new_admin_id)
+    print(admins)
+    await message.answer(text=f"Администратор с id {new_admin_id} удален!")
     await state.finish()

@@ -15,7 +15,6 @@ admin_id = os.getenv("ADMIN_ID")
 super_id = os.getenv("SUPER_ID")
 admins = [
     os.getenv("SUPER_ID"),
-    os.getenv("ADMIN_ID"),
 ]
 
 ip = os.getenv("ip")
