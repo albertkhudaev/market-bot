@@ -60,3 +60,6 @@ async def count_all():
 async def delete_item(item_id):
     item = await get_item(item_id)
     await item.delete()
+
+async def get_all_items() -> List[Item]:
+    return await Item.query.gino.all()

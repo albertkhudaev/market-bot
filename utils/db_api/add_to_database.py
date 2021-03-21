@@ -26,23 +26,6 @@ async def add_items():
                    category_name="🔌 Электроника", category_code="Electronics",
                    subcategory_name="☎️ Телефоны", subcategory_code="Phones",
                    price=100, photo="-", description="Описание товара")
-    await add_item(id="6", name="PewDiePie",
-                   category_name="🛍 Услуги Рекламы", category_code="Ads",
-                   subcategory_name="📹 На Youtube", subcategory_code="Youtube",
-                   price=100, photo="-", description="Описание товара")
-    await add_item(id="7", name="Топлес",
-                   category_name="🛍 Услуги Рекламы", category_code="Ads",
-                   subcategory_name="📹 На Youtube", subcategory_code="Youtube",
-                   price=100, photo="-", description="Описание товара")
-    await add_item(id="8", name="Орлёнок",
-                   category_name="🛍 Услуги Рекламы", category_code="Ads",
-                   subcategory_name="🗣 На Вконтакте", subcategory_code="VK",
-                   price=100, photo="-", description="Описание товара")
-    await add_item(id="9", name="МДК",
-                   category_name="🛍 Услуги Рекламы", category_code="Ads",
-                   subcategory_name="🗣 На Вконтакте", subcategory_code="VK",
-                   price=100, photo="-", description="Описание товара")
-
 loop = asyncio.get_event_loop()
 loop.run_until_complete(create_db())
 loop.run_until_complete(add_items())

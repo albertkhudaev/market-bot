@@ -10,9 +10,9 @@ from states import EditState, NewState
 from keyboards.inline.menu_keyboards import menu_cd, categories_keyboard, subcategories_keyboard, \
     items_keyboard, item_keyboard, admin_keyboard, item_edit_keyboard, delete_question_keyboard
 from loader import dp
-from utils.db_api.db_commands import get_item, count_all, get_items, add_item, delete_item
+from utils.db_api.db_commands import get_item, count_all, get_items, add_item, delete_item, get_all_items
 from loader import storage
-from utils.misc.translate import codeformer
+from utils.misc.translate import codeformer, get_id
 
 
 # Хендлер на команду /menu
@@ -163,6 +163,7 @@ async def list_items_edit(callback: CallbackQuery, category, subcategory, **kwar
 #Функции для редактирования товара
 async def show_item_edit(message: Union[CallbackQuery, Message, InputMediaPhoto], category, cat_name, subcategory, subcat_name, item_id, new):
     items = await count_all()
+    all_id = []
     if item_id > items:
         if new:
             category_name = cat_name
@@ -176,11 +177,17 @@ async def show_item_edit(message: Union[CallbackQuery, Message, InputMediaPhoto]
             category_code = f"{item.category_code}"
             subcategory_name = f"{item.subcategory_name}"
             subcategory_code = f"{item.subcategory_code}"
-        await add_item(id=(items + 1), name=" ",
+        all_items = await get_all_items()
+        for item in all_items:
+            all_id.append(item.id)
+        print(all_id, "###################")
+        next_id = get_id(1, all_id)
+        print(next_id, '##################')
+        await add_item(id=next_id, name=" ",
                    category_name=category_name, category_code=category_code,
                    subcategory_name=subcategory_name, subcategory_code=subcategory_code,
                    price=1, photo="-", description="Описание товара")
-        item_id = items + 1
+        item_id = next_id
     item = await get_item(item_id)
     name = f"{item.name}"
     price = f"{item.price}"
