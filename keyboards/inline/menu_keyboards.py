@@ -179,12 +179,20 @@ def item_keyboard(category, subcategory, item_id, user):
             callback_data=buy_item.new(item_id=item_id)
         )
     )
-    markup.row(
-        InlineKeyboardButton(
-            text="Назад",
-            callback_data=make_callback_data(level=CURRENT_LEVEL - 1,
-                                             category=category, subcategory=subcategory))
-    )
+    if user == "photo":
+        markup.row(
+            InlineKeyboardButton(
+                text="Назад",
+                callback_data=make_callback_data(level=CURRENT_LEVEL - 1,
+                                                category=category, cat_name="photo", subcategory=subcategory))
+        )
+    else:
+        markup.row(
+            InlineKeyboardButton(
+                text="Назад",
+                callback_data=make_callback_data(level=CURRENT_LEVEL - 1,
+                                                category=category, subcategory=subcategory))
+        )
     return markup
 
 
