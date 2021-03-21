@@ -212,6 +212,9 @@ async def admin_keyboard():
             InlineKeyboardButton(text="Удалить товар", callback_data=make_callback_data(level=30))
     )
     markup.row(
+            InlineKeyboardButton(text="Добавить администратора", callback_data=make_callback_data(level=80))
+    )
+    markup.row(
         InlineKeyboardButton(
             text="Выход",
             callback_data=make_callback_data(level=0))

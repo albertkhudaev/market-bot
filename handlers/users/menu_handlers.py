@@ -6,13 +6,14 @@ from aiogram.dispatcher.filters import Command
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message, InputMediaPhoto
 
-from states import EditState, NewState
+from states import EditState, NewState, NewAdminState
 from keyboards.inline.menu_keyboards import menu_cd, categories_keyboard, subcategories_keyboard, \
     items_keyboard, item_keyboard, admin_keyboard, item_edit_keyboard, delete_question_keyboard
 from loader import dp
 from utils.db_api.db_commands import get_item, count_all, get_items, add_item, delete_item, get_all_items
 from loader import storage
 from utils.misc.translate import codeformer, get_id
+from data.config import super_id, admins
 
 
 # Хендлер на команду /menu
@@ -122,6 +123,7 @@ async def navigate(call: CallbackQuery, callback_data: dict):
         "32": list_items_delete,
         "33": item_question_delete,
         "34": item_yes_delete,
+        "80": admin_add,
         "99": admin_panel
     }
 
@@ -320,8 +322,23 @@ async def item_question_delete(callback: CallbackQuery, category, subcategory, i
 async def item_yes_delete(callback: CallbackQuery, item_id, **kwargs):
     await delete_item(item_id)
     markup = await admin_keyboard()
-    await callback.message.edit_text("Меню администратора", reply_markup=markup)
+    await callback.message.edit_text(text="Меню администратора", reply_markup=markup)
 
 async def admin_panel(callback: CallbackQuery, **kwargs):
     markup = await admin_keyboard()
-    await callback.message.edit_text("Меню администратора", reply_markup=markup)
+    await callback.message.edit_text(text="Меню администратора", reply_markup=markup)
+
+async def admin_add(callback: CallbackQuery, **kwargs):
+    if str(callback.message.chat.id) == super_id:
+        await callback.message.edit_text(text="Введите chat id администратора:")
+        await NewAdminState.newadmin.set()
+    else:
+        print(callback.message.chat.id)
+        await callback.message.edit_text(text="Недостаточно прав")
+
+@dp.message_handler(state=NewAdminState.newadmin, content_types=types.ContentTypes.TEXT)
+async def new_category_handler(message: types.Message, state: FSMContext):
+    new_admin_id = str(message.text)
+    admins.append(new_admin_id)
+    await message.answer(text=f"Администратор с id {new_admin_id} добавлен!")
+    await state.finish()

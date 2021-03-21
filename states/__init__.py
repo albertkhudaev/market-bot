@@ -1,1 +1,1 @@
-from .state import EditState, NewState
+from .state import EditState, NewState, NewAdminState

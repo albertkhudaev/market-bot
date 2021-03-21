@@ -11,8 +11,10 @@ BOT_TOKEN = str(os.getenv("BOT_TOKEN"))
 PGUSER = str(os.getenv("PGUSER"))
 PGPASSWORD = str(os.getenv("PGPASSWORD"))
 DATABASE = str(os.getenv("DATABASE"))
-admin_id=os.getenv("ADMIN_ID")
+admin_id = os.getenv("ADMIN_ID")
+super_id = os.getenv("SUPER_ID")
 admins = [
+    os.getenv("SUPER_ID"),
     os.getenv("ADMIN_ID"),
 ]
 

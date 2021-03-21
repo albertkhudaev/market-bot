@@ -10,3 +10,6 @@ class EditState(StatesGroup):
 class NewState(StatesGroup):
     newcat = State()
     newsubcat = State()
+
+class NewAdminState(StatesGroup):
+    newadmin = State()
