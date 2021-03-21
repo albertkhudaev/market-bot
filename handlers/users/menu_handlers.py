@@ -4,9 +4,9 @@ from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher.filters import Command
 from aiogram.dispatcher import FSMContext
-from aiogram.types import CallbackQuery, Message, InputMediaPhoto
+from aiogram.types import CallbackQuery, Message, InputMediaPhoto, Chat
 
-from states import EditState, NewState, NewAdminState
+from states import EditState, NewState, NewAdminState, BuyItemState
 from keyboards.inline.menu_keyboards import menu_cd, categories_keyboard, subcategories_keyboard, \
     items_keyboard, item_keyboard, admin_keyboard, item_edit_keyboard, delete_question_keyboard
 from loader import dp
@@ -14,6 +14,7 @@ from utils.db_api.db_commands import get_item, count_all, get_items, add_item, d
 from loader import storage
 from utils.misc.translate import codeformer, get_id
 from data.config import super_id, admins
+from loader import bot
 
 
 # Хендлер на команду /menu
@@ -71,6 +72,27 @@ async def show_item(callback: CallbackQuery, category, subcategory, item_id, **k
         markup = item_keyboard(category, subcategory, item_id, "customer")
         await callback.message.edit_text(text=text, reply_markup=markup)
 
+async def buy_item(callback: CallbackQuery, item_id, **kwargs):
+    await callback.message.answer("Как к вам можно обращаться?")
+    await BuyItemState.name.set()
+    state = Dispatcher.get_current().current_state()
+    await state.update_data(item_id=item_id)
+
+@dp.message_handler(state=BuyItemState.name, content_types=types.ContentTypes.TEXT)
+async def buy_item_namestate(message: types.Message, state: FSMContext):
+    await state.update_data(name=message.text)
+    await message.answer("Введите пожалуйста номер телефона для связи:")
+    await BuyItemState.telephone.set()
+
+@dp.message_handler(state=BuyItemState.telephone, content_types=types.ContentTypes.TEXT)
+async def buy_item_telephonestate(message: types.Message, state: FSMContext):
+    await state.update_data(telephone=message.text)
+    data = await state.get_data()
+    await message.answer("Спасибо! Мы с вами скоро свяжемся")
+    await state.finish()
+    item = await get_item(data['item_id'])
+    for admin in admins:
+        await bot.send_message(admin, f"{data['name']} хочет купить {item.name} за {item.price}$. \n Номер телефона: {data['telephone']}")
 
 # Функция, которая обрабатывает ВСЕ нажатия на кнопки в этой менюшке
 @dp.callback_query_handler(menu_cd.filter())
@@ -105,6 +127,7 @@ async def navigate(call: CallbackQuery, callback_data: dict):
         "1": list_subcategories, 
         "2": list_items,
         "3": show_item,
+        "4": buy_item,
         "10": list_categories_edit,
         "11": list_subcategories_edit,
         "12": list_items_edit,

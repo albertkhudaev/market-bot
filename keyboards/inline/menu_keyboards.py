@@ -176,7 +176,8 @@ def item_keyboard(category, subcategory, item_id, user):
     markup.row(
         InlineKeyboardButton(
             text=f"Купить",
-            callback_data=buy_item.new(item_id=item_id)
+            callback_data=make_callback_data(level=CURRENT_LEVEL + 1,
+                                                item_id=item_id)
         )
     )
     if user == "photo":

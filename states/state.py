@@ -14,3 +14,7 @@ class NewState(StatesGroup):
 class NewAdminState(StatesGroup):
     newadmin = State()
     deladmin = State()
+
+class BuyItemState(StatesGroup):
+    name = State()
+    telephone = State()
