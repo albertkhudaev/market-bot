@@ -62,7 +62,7 @@ async def list_items(callback: CallbackQuery, category, cat_name, subcategory, *
 async def show_item(callback: CallbackQuery, category, subcategory, item_id, **kwargs):
     # Берем запись о нашем товаре из базы данных
     item = await get_item(item_id)
-    text = f"Купи {item.name} \n{item.description}"
+    text = f"{item.name} \n{item.description}"
     photo = f"{item.photo}"
     if item.photo != "-":
         markup = item_keyboard(category, subcategory, item_id, "photo")
@@ -168,8 +168,11 @@ async def list_subcategories_edit(callback: CallbackQuery, category, cat_name, *
         await callback.message.edit_text(text="Недостаточно прав")
 
 async def list_items_edit(callback: CallbackQuery, category, subcategory, **kwargs):
-    markup = await items_keyboard(category, subcategory, "edit")
-    await callback.message.edit_text(text="Меню редактирования товара", reply_markup=markup)
+    if str(callback.message.chat.id) in admins:
+        markup = await items_keyboard(category, subcategory, "edit")
+        await callback.message.edit_text(text="Меню редактирования товара", reply_markup=markup)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 #Функции для редактирования товара
 async def show_item_edit(message: Union[CallbackQuery, Message, InputMediaPhoto], category, cat_name, subcategory, subcat_name, item_id, new):
@@ -204,63 +207,97 @@ async def show_item_edit(message: Union[CallbackQuery, Message, InputMediaPhoto]
     photo = f"{item.photo}"
     markup = item_edit_keyboard(category, subcategory, item_id, name, price, description, photo)
     if isinstance(message, Message):
-        await message.answer(f"Редактирование {item.name}", reply_markup=markup)
+        if str(message.chat.id) in admins:
+            await message.answer(f"Редактирование {item.name}", reply_markup=markup)
+        else:
+            await message.answer("Недостаточно прав")
     elif isinstance(message, InputMediaPhoto):
-        await message.answer(f"Редактирование {item.name}", reply_markup=markup)
+        if str(message.chat.id) in admins:
+            await message.answer(f"Редактирование {item.name}", reply_markup=markup)
+        else:
+            await message.answer("Недостаточно прав")
     elif isinstance(message, CallbackQuery):
         callback = message
-        text = f"Редактирование {item.name}"
-        await callback.message.edit_text(text=text, reply_markup=markup)
+        if str(callback.message.chat.id) in admins:
+            text = f"Редактирование {item.name}"
+            await callback.message.edit_text(text=text, reply_markup=markup)
+        else:
+            await callback.message.edit_text(text="Недостаточно прав")
     
 
 async def edit_name(callback: CallbackQuery, category, cat_name, subcategory, subcat_name, item_id, new):
-    await callback.message.edit_text(text="Введите новое имя:")
-    await EditState.name.set()
-    state = Dispatcher.get_current().current_state()
-    await state.update_data(category=category, cat_name=cat_name, subcategory=subcategory, subcat_name=subcat_name, item_id=item_id, new=new)
+    if str(callback.message.chat.id) in admins:
+        await callback.message.edit_text(text="Введите новое имя:")
+        await EditState.name.set()
+        state = Dispatcher.get_current().current_state()
+        await state.update_data(category=category, cat_name=cat_name, subcategory=subcategory, subcat_name=subcat_name, item_id=item_id, new=new)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 @dp.message_handler(state=EditState.name, content_types=types.ContentTypes.TEXT)
 async def edit_name_handler(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-    item = await get_item(data['item_id'])
-    await item.update(name=message.text).apply()
-    await state.finish()
-    await show_item_edit(message, data['category'], data['cat_name'], data['subcategory'], data['subcat_name'], data['item_id'], data['new'])
+    if str(message.chat.id) in admins:
+        data = await state.get_data()
+        item = await get_item(data['item_id'])
+        await item.update(name=message.text).apply()
+        await state.finish()
+        await show_item_edit(message, data['category'], data['cat_name'], data['subcategory'], data['subcat_name'], data['item_id'], data['new'])
+    else:
+        await message.answer("Недостаточно прав")
+        await state.finish()
 
 async def edit_price(callback: CallbackQuery, category, cat_name, subcategory, subcat_name, item_id, new):
-    await callback.message.answer(text="Введите новую цену:")
-    await EditState.price.set()
-    state = Dispatcher.get_current().current_state()
-    await state.update_data(category=category, cat_name=cat_name, subcategory=subcategory, subcat_name=subcat_name, item_id=item_id, new=new)
+    if str(callback.message.chat.id) in admins:
+        await callback.message.answer(text="Введите новую цену:")
+        await EditState.price.set()
+        state = Dispatcher.get_current().current_state()
+        await state.update_data(category=category, cat_name=cat_name, subcategory=subcategory, subcat_name=subcat_name, item_id=item_id, new=new)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
+        await state.finish()
 
 @dp.message_handler(state=EditState.price, content_types=types.ContentTypes.TEXT)
 async def edit_price_handler(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-    item = await get_item(data['item_id'])
-    await item.update(price=int(message.text)).apply()
-    await state.finish()
-    await show_item_edit(message, data['category'], data['cat_name'], data['subcategory'], data['subcat_name'], data['item_id'], data['new'])
+    if str(message.chat.id) in admins:
+        data = await state.get_data()
+        item = await get_item(data['item_id'])
+        await item.update(price=int(message.text)).apply()
+        await state.finish()
+        await show_item_edit(message, data['category'], data['cat_name'], data['subcategory'], data['subcat_name'], data['item_id'], data['new'])
+    else:
+        await message.answer("Недостаточно прав")
+        await state.finish()
 
 async def edit_description(callback: CallbackQuery, category, cat_name, subcategory, subcat_name, item_id, new):
-    await callback.message.answer(text="Введите новое описание:")
-    await EditState.description.set()
-    state = Dispatcher.get_current().current_state()
-    await state.update_data(category=category, cat_name=cat_name, subcategory=subcategory, subcat_name=subcat_name, item_id=item_id, new=new)
+    if str(callback.message.chat.id) in admins:
+        await callback.message.answer(text="Введите новое описание:")
+        await EditState.description.set()
+        state = Dispatcher.get_current().current_state()
+        await state.update_data(category=category, cat_name=cat_name, subcategory=subcategory, subcat_name=subcat_name, item_id=item_id, new=new)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 @dp.message_handler(state=EditState.description, content_types=types.ContentTypes.TEXT)
 async def edit_description_handler(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-    item = await get_item(data['item_id'])
-    await item.update(description=message.text).apply()
-    await state.finish()
-    await show_item_edit(message, data['category'], data['cat_name'], data['subcategory'], data['subcat_name'], data['item_id'], data['new'])
+    if str(message.chat.id) in admins:
+        data = await state.get_data()
+        item = await get_item(data['item_id'])
+        await item.update(description=message.text).apply()
+        await state.finish()
+        await show_item_edit(message, data['category'], data['cat_name'], data['subcategory'], data['subcat_name'], data['item_id'], data['new'])
+    else:
+        await message.answer("Недостаточно прав")
+        await state.finish()
 
 
 async def edit_photo(callback: CallbackQuery, category, cat_name, subcategory, subcat_name, item_id, new):
-    await callback.message.answer(text="Отправьте новое фото:")
-    await EditState.photo.set()
-    state = Dispatcher.get_current().current_state()
-    await state.update_data(category=category, cat_name=cat_name, subcategory=subcategory, subcat_name=subcat_name, item_id=item_id, new=new)
+    if str(callback.message.chat.id) in admins:
+        await callback.message.answer(text="Отправьте новое фото:")
+        await EditState.photo.set()
+        state = Dispatcher.get_current().current_state()
+        await state.update_data(category=category, cat_name=cat_name, subcategory=subcategory, subcat_name=subcat_name, item_id=item_id, new=new)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 
 @dp.message_handler(state=EditState.photo, content_types=['photo'])
@@ -275,67 +312,110 @@ async def edit_photo_handler(message: InputMediaPhoto, state: FSMContext):
 # Функции с категориями, подкатегориями и товарами для создания товара
 
 async def list_categories_new(callback: CallbackQuery, **kwargs):
-    markup = await categories_keyboard("new")
-    await callback.message.edit_text(text="Меню редактирования товара", reply_markup=markup)
+    if str(callback.message.chat.id) in admins:
+        markup = await categories_keyboard("new")
+        await callback.message.edit_text(text="Меню редактирования товара", reply_markup=markup)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 async def list_subcategories_new(callback: CallbackQuery, category, cat_name, **kwargs):
-    markup = await subcategories_keyboard(category, cat_name, "new")
-    await callback.message.edit_text(text="Меню редактирования товара", reply_markup=markup)
+    if str(callback.message.chat.id) in admins:
+        markup = await subcategories_keyboard(category, cat_name, "new")
+        await callback.message.edit_text(text="Меню редактирования товара", reply_markup=markup)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 async def new_category(callback: CallbackQuery, **kwargs):
-    await callback.message.edit_text(text="Введите имя категории:")
-    await NewState.newcat.set()
+    if str(callback.message.chat.id) in admins:
+        await callback.message.edit_text(text="Введите имя категории:")
+        await NewState.newcat.set()
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 @dp.message_handler(state=NewState.newcat, content_types=types.ContentTypes.TEXT)
 async def new_category_handler(message: types.Message, state: FSMContext):
-    cat_name = str(message.text)
-    category = await codeformer(message.text, "category")
-    await state.finish()
-    await new_subcategory(message, category, cat_name)
+    if str(message.chat.id) in admins:
+        cat_name = str(message.text)
+        category = await codeformer(message.text, "category")
+        await state.finish()
+        await new_subcategory(message, category, cat_name)
+    else:
+        await message.answer("Недостаточно прав")
+        await state.finish()
 
 async def new_subcategory(message: Union[CallbackQuery, Message], category, cat_name, **kwargs):
     if isinstance(message, Message):
-        await message.answer("Введите имя подкатегории")
+        if str(message.chat.id) in admins:
+            await message.answer("Введите имя подкатегории")
+        else:
+            await message.answer("Недостаточно прав")
+            return
     elif isinstance(message, CallbackQuery):
-        await message.message.edit_text(text="Введите имя подкатегории:")
+        if str(message.message.chat.id) in admins:
+            await message.message.edit_text(text="Введите имя подкатегории:")
+        else:
+            await message.message.edit_text(text="Недостаточно прав")
+            return
     await NewState.newsubcat.set()
     state = Dispatcher.get_current().current_state()
     await state.update_data(category=category, cat_name=cat_name)
 
 @dp.message_handler(state=NewState.newsubcat, content_types=types.ContentTypes.TEXT)
 async def new_category_handler(message: types.Message, state: FSMContext):
-    data = await state.get_data()
-    subcat_name = str(message.text)
-    subcategory = await codeformer(message.text, "subcategory", category=data['category'])
-    item_id = (await count_all()) + 1
-    new = True
-    await state.finish()
-    await show_item_edit(message, data['category'], data['cat_name'], subcategory, subcat_name, item_id, new)
+    if str(message.chat.id) in admins:
+        data = await state.get_data()
+        subcat_name = str(message.text)
+        subcategory = await codeformer(message.text, "subcategory", category=data['category'])
+        item_id = (await count_all()) + 1
+        new = True
+        await state.finish()
+        await show_item_edit(message, data['category'], data['cat_name'], subcategory, subcat_name, item_id, new)
+    else:
+        await message.answer("Недостаточно прав")
+        await state.finish()
 
 async def list_categories_delete(callback: CallbackQuery, **kwargs):
-    markup = await categories_keyboard("del")
-    await callback.message.edit_text(text="Меню удаления товара", reply_markup=markup)
+    if str(callback.message.chat.id) in admins:
+        markup = await categories_keyboard("del")
+        await callback.message.edit_text(text="Меню удаления товара", reply_markup=markup)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 async def list_subcategories_delete(callback: CallbackQuery, category, cat_name, **kwargs):
-    markup = await subcategories_keyboard(category, cat_name, "del")
-    await callback.message.edit_text(text="Меню удаления товара", reply_markup=markup)
+    if str(callback.message.chat.id) in admins:
+        markup = await subcategories_keyboard(category, cat_name, "del")
+        await callback.message.edit_text(text="Меню удаления товара", reply_markup=markup)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 async def list_items_delete(callback: CallbackQuery, category, subcategory, **kwargs):
-    markup = await items_keyboard(category, subcategory, "del")
-    await callback.message.edit_text(text="Меню удаления товара", reply_markup=markup)
+    if str(callback.message.chat.id) in admins:
+        markup = await items_keyboard(category, subcategory, "del")
+        await callback.message.edit_text(text="Меню удаления товара", reply_markup=markup)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 async def item_question_delete(callback: CallbackQuery, category, subcategory, item_id, **kwargs):
-    markup = delete_question_keyboard(category, subcategory, item_id)
-    await callback.message.edit_text(text="Вы уверены что хотите удалить товар?", reply_markup=markup)
+    if str(callback.message.chat.id) in admins:
+        markup = delete_question_keyboard(category, subcategory, item_id)
+        await callback.message.edit_text(text="Вы уверены что хотите удалить товар?", reply_markup=markup)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 async def item_yes_delete(callback: CallbackQuery, item_id, **kwargs):
-    await delete_item(item_id)
-    markup = await admin_keyboard()
-    await callback.message.edit_text(text="Меню администратора", reply_markup=markup)
+    if str(callback.message.chat.id) in admins:
+        await delete_item(item_id)
+        markup = await admin_keyboard()
+        await callback.message.edit_text(text="Меню администратора", reply_markup=markup)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 async def admin_panel(callback: CallbackQuery, **kwargs):
-    markup = await admin_keyboard()
-    await callback.message.edit_text(text="Меню администратора", reply_markup=markup)
+    if str(callback.message.chat.id) in admins:
+        markup = await admin_keyboard()
+        await callback.message.edit_text(text="Меню администратора", reply_markup=markup)
+    else:
+        await callback.message.edit_text(text="Недостаточно прав")
 
 async def admin_add(callback: CallbackQuery, **kwargs):
     if str(callback.message.chat.id) == super_id:
