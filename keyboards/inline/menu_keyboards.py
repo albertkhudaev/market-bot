@@ -27,6 +27,10 @@ async def categories_keyboard(user):
     # Указываем, что текущий уровень меню - 20, при заходе с созданием
     elif user == "new":
         CURRENT_LEVEL = 20
+    # Указываем, что текущий уровень меню - 30, при заходе с удалением
+    elif user == "del":
+        CURRENT_LEVEL = 30
+    
 
     # Создаем Клавиатуру
     markup = InlineKeyboardMarkup()
@@ -80,7 +84,11 @@ async def subcategories_keyboard(category, cat_name, user):
     elif user == "new":
         CURRENT_LEVEL = 21
         items = await count_all()
+    elif user == "del":
+        CURRENT_LEVEL = 31
     markup = InlineKeyboardMarkup()
+    # Указываем, что текущий уровень меню - 11, при заходе с редактированием
+    
 
     # Забираем список товаров с РАЗНЫМИ подкатегориями из базы данных с учетом выбранной категории и проходим по ним
     subcategories = await get_subcategories(category)
@@ -129,6 +137,8 @@ async def items_keyboard(category, subcategory, user):
     # Указываем, что текущий уровень меню - 12, при заходе с редактированием
     elif user == "edit":
         CURRENT_LEVEL = 12
+    elif user == "del":
+        CURRENT_LEVEL = 32
 
     # Устанавливаю row_width = 1, чтобы показывалась одна кнопка в строке на товар
     markup = InlineKeyboardMarkup(row_width=1)
@@ -161,9 +171,7 @@ async def items_keyboard(category, subcategory, user):
 
 # Создаем функцию, которая отдает клавиатуру с кнопками "купить" и "назад" для выбранного товара
 def item_keyboard(category, subcategory, item_id, user):
-    # Указываем, что текущий уровень меню - 3, при заходе обычным пользователем
-    if user == "customer":
-        CURRENT_LEVEL = 3
+    CURRENT_LEVEL = 3
     markup = InlineKeyboardMarkup()
     markup.row(
         InlineKeyboardButton(
@@ -191,6 +199,9 @@ async def admin_keyboard():
         )
     markup.row(
             InlineKeyboardButton(text="Добавить товар", callback_data=make_callback_data(level=20))
+    )
+    markup.row(
+            InlineKeyboardButton(text="Удалить товар", callback_data=make_callback_data(level=30))
     )
     markup.row(
         InlineKeyboardButton(
@@ -246,5 +257,24 @@ def item_edit_keyboard(category, subcategory, item_id, name, price, description,
         InlineKeyboardButton(
             text="Выход",
             callback_data=make_callback_data(level=0))
+    )
+    return markup
+
+def delete_question_keyboard(category, subcategory, item_id):
+    CURRENT_LEVEL = 33
+    markup = InlineKeyboardMarkup()
+    markup.row(
+        InlineKeyboardButton(
+            text="Да",
+            callback_data = make_callback_data(level=CURRENT_LEVEL + 1,
+                                           category=category, subcategory=subcategory,
+                                           item_id=item_id)
+        )
+    )
+    markup.row(
+        InlineKeyboardButton(
+            text="Нет",
+            callback_data=make_callback_data(level=99)
+        )
     )
     return markup

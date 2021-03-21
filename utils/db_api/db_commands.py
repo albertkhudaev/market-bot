@@ -56,3 +56,7 @@ async def get_item(item_id) -> Item:
 async def count_all():
     count = await db.func.count(Item.id).gino.scalar()
     return count
+
+async def delete_item(item_id):
+    item = await get_item(item_id)
+    await item.delete()

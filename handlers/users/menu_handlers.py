@@ -8,9 +8,9 @@ from aiogram.types import CallbackQuery, Message
 
 from states import EditState, NewState
 from keyboards.inline.menu_keyboards import menu_cd, categories_keyboard, subcategories_keyboard, \
-    items_keyboard, item_keyboard, admin_keyboard, item_edit_keyboard
+    items_keyboard, item_keyboard, admin_keyboard, item_edit_keyboard, delete_question_keyboard
 from loader import dp
-from utils.db_api.db_commands import get_item, count_all, get_items, add_item
+from utils.db_api.db_commands import get_item, count_all, get_items, add_item, delete_item
 from loader import storage
 from utils.misc.translate import codeformer
 
@@ -114,7 +114,12 @@ async def navigate(call: CallbackQuery, callback_data: dict):
         "21": list_subcategories_new,
         "22": new_category,
         "23": new_subcategory,
-        "99": admin_keyboard
+        "30": list_categories_delete,
+        "31": list_subcategories_delete,
+        "32": list_items_delete,
+        "33": item_question_delete,
+        "34": item_yes_delete,
+        "99": admin_panel
     }
 
     # Забираем нужную функцию для выбранного уровня
@@ -284,3 +289,28 @@ async def new_category_handler(message: types.Message, state: FSMContext):
     new = True
     await state.finish()
     await show_item_edit(message, data['category'], data['cat_name'], subcategory, subcat_name, item_id, new)
+
+async def list_categories_delete(callback: CallbackQuery, **kwargs):
+    markup = await categories_keyboard("del")
+    await callback.message.answer(text="Меню удаления товара", reply_markup=markup)
+
+async def list_subcategories_delete(callback: CallbackQuery, category, cat_name, **kwargs):
+    markup = await subcategories_keyboard(category, cat_name, "del")
+    await callback.message.answer(text="Меню удаления товара", reply_markup=markup)
+
+async def list_items_delete(callback: CallbackQuery, category, subcategory, **kwargs):
+    markup = await items_keyboard(category, subcategory, "del")
+    await callback.message.answer(text="Меню удаления товара", reply_markup=markup)
+
+async def item_question_delete(callback: CallbackQuery, category, subcategory, item_id, **kwargs):
+    markup = delete_question_keyboard(category, subcategory, item_id)
+    await callback.message.answer(text="Вы уверены что хотите удалить товар?", reply_markup=markup)
+
+async def item_yes_delete(callback: CallbackQuery, item_id, **kwargs):
+    await delete_item(item_id)
+    markup = await admin_keyboard()
+    await callback.message.answer("Меню администратора", reply_markup=markup)
+
+async def admin_panel(callback: CallbackQuery, **kwargs):
+    markup = await admin_keyboard()
+    await callback.message.answer("Меню администратора", reply_markup=markup)
