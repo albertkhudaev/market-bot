@@ -212,7 +212,7 @@ async def show_item_edit(message: Union[CallbackQuery, Message, InputMediaPhoto]
             subcategory_code = subcategory
         else:
             itemz = await get_items(category, subcategory)
-            item = itemz[1]
+            item = itemz[0]
             category_name = f"{item.category_name}"
             category_code = f"{item.category_code}"
             subcategory_name = f"{item.subcategory_name}"
@@ -227,10 +227,10 @@ async def show_item_edit(message: Union[CallbackQuery, Message, InputMediaPhoto]
                    price=1, photo="-", description="Описание товара")
         item_id = next_id
     item = await get_item(item_id)
-    name = f"{item.name}"
-    price = f"{item.price}"
-    description = f"{item.description}"
-    photo = f"{item.photo}"
+    name = "Редактировать имя"
+    price = "Редактировать цену"
+    description = "Редактировать описание"
+    photo = "Добавить фото"
     markup = item_edit_keyboard(category, subcategory, item_id, name, price, description, photo)
     if isinstance(message, Message):
         if str(message.chat.id) in admins:
