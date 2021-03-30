@@ -2,7 +2,7 @@ from typing import Union
 
 from aiogram import types, Dispatcher
 from aiogram.dispatcher.filters.state import State, StatesGroup
-from aiogram.dispatcher.filters import Command
+from aiogram.dispatcher.filters import Command, Text
 from aiogram.dispatcher import FSMContext
 from aiogram.types import CallbackQuery, Message, InputMediaPhoto, Chat
 
@@ -23,6 +23,9 @@ async def show_menu(message: types.Message):
     # Выполним функцию, которая отправит пользователю кнопки с доступными категориями
     await list_categories(message)
 
+@dp.message_handler(Text("Показать меню"))
+async def show_menu(message: types.Message):
+    await list_categories(message)
 
 # Та самая функция, которая отдает категории. Она может принимать как CallbackQuery, так и Message
 # Помимо этого, мы в нее можем отправить и другие параметры - category, subcategory, item_id,
