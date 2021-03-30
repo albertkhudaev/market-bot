@@ -95,7 +95,7 @@ async def buy_item_telephonestate(message: types.Message, state: FSMContext):
     await state.finish()
     item = await get_item(data['item_id'])
     for admin in admins:
-        await bot.send_message(admin, f"{data['name']} хочет купить {item.name} за {item.price}$. \n Номер телефона: {data['telephone']}")
+        await bot.send_message(admin, f"{data['name']} хочет купить {item.name} за {item.price}. \n Номер телефона: {data['telephone']}")
 
 # Функция, которая обрабатывает ВСЕ нажатия на кнопки в этой менюшке
 @dp.callback_query_handler(menu_cd.filter())
@@ -287,7 +287,7 @@ async def edit_price_handler(message: types.Message, state: FSMContext):
     if str(message.chat.id) in admins:
         data = await state.get_data()
         item = await get_item(data['item_id'])
-        await item.update(price=int(message.text)).apply()
+        await item.update(price=message.text).apply()
         await state.finish()
         await show_item_edit(message, data['category'], data['cat_name'], data['subcategory'], data['subcat_name'], data['item_id'], data['new'])
     else:

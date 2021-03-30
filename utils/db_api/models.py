@@ -26,7 +26,7 @@ class Item(db.Model):
     # Название, фото и цена товара
     name = Column(String(50))
     photo = Column(String(250))
-    price = Column(Integer)
+    price = Column(String(50))
 
     # Описание товара
     description = Column(String(150))
