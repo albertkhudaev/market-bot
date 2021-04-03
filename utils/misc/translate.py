@@ -1,7 +1,11 @@
 import asyncio
-#from utils.db_api.db_commands import get_subcategories, count_items, get_items, get_categories
-from utils.db_api.json_commands import get_subcategories, count_items, get_items, get_categories
 from typing import List
+
+from data.config import dbsource
+if dbsource == "pg":
+    from utils.db_api.db_commands import get_subcategories, count_items, get_items, get_categories
+else:
+    from utils.db_api.json_commands import get_subcategories, count_items, get_items, get_categories
 
 trans = {'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zch', 
 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 

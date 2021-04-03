@@ -1,10 +1,11 @@
 from loader import bot
-from data.config import admin_id
+from data.config import admin_id, dbsource
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 from aiogram.utils.callback_data import CallbackData
-
-#from utils.db_api.db_commands import get_subcategories, count_items, get_items, get_categories, count_all
-from utils.db_api.json_commands import get_subcategories, count_items, get_items, get_categories, count_all
+if dbsource == "pg":
+    from utils.db_api.db_commands import get_subcategories, count_items, get_items, get_categories, count_all
+else:
+    from utils.db_api.json_commands import get_subcategories, count_items, get_items, get_categories, count_all
 
 # Создаем CallbackData-объекты, которые будут нужны для работы с менюшкой
 menu_cd = CallbackData("show_menu", "level", "category", "subcategory", "item_id", "cat_name", "subcat_name")
