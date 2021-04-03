@@ -2,6 +2,21 @@ import json
 import asyncio
 from aiofile import AIOFile
 
+
+class Item(dict):
+    def __init__(self, item):
+        self.item = item
+        self.id = item["id"]
+        self.name = item["name"]
+        self.category_name = item["category_name"]
+        self.category_code = item["category_code"]
+        self.subcategory_name = item["subcategory_name"]
+        self.subcategory_code = item["subcategory_code"]
+        self.price = item["price"]
+        self.photo = item["photo"]
+        self.description = item["description"]
+
+
 async def aswriter(data):
     async with AIOFile("./utils/db_api/database.json", "w+") as f:
         await f.write(data)
@@ -64,7 +79,7 @@ async def get_items(category_code, subcategory_code):
 
 async def get_item(item_id):
     data = await asreader()
-    return data[str(item_id)]
+    return Item(data[str(item_id)])
 
 async def get_all_items():
     data = await asreader()
