@@ -22,7 +22,7 @@ class Item(dict):
 
     async def apply(self):
         data = await asreader()
-        data[self.id] = self.item
+        data[str(self.id)] = self.item
         data = json.dumps(data)
         await aswriter(data)
 
