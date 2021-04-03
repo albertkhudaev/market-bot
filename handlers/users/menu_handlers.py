@@ -10,7 +10,8 @@ from states import EditState, NewState, NewAdminState, BuyItemState
 from keyboards.inline.menu_keyboards import menu_cd, categories_keyboard, subcategories_keyboard, \
     items_keyboard, item_keyboard, admin_keyboard, item_edit_keyboard, delete_question_keyboard
 from loader import dp
-from utils.db_api.db_commands import get_item, count_all, get_items, add_item, delete_item, get_all_items
+#from utils.db_api.db_commands import get_item, count_all, get_items, add_item, delete_item, get_all_items
+from utils.db_api.json_commands import get_item, count_all, get_items, add_item, delete_item, get_all_items
 from loader import storage
 from utils.misc.translate import codeformer, get_id
 from data.config import super_id, admins

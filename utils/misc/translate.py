@@ -1,5 +1,6 @@
 import asyncio
-from utils.db_api.db_commands import get_subcategories, count_items, get_items, get_categories
+#from utils.db_api.db_commands import get_subcategories, count_items, get_items, get_categories
+from utils.db_api.json_commands import get_subcategories, count_items, get_items, get_categories
 from typing import List
 
 trans = {'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zch', 
