@@ -14,13 +14,25 @@ class Item(dict):
         self.price = item["price"]
         self.photo = item["photo"]
         self.description = item["description"]
+    
+    def update(self, **kwargs):
+        for i in kwargs:
+            self.item[i] = kwargs[i]
+        return self
+
+    async def apply(self):
+        data = await asreader()
+        data[self.id] = self.item
+        data = json.dumps(data)
+        await aswriter(data)
+
 
 async def aswriter(data):
-    async with AIOFile("./utils/database.json", "w+") as f:
+    async with AIOFile("./utils/db_api/database.json", "w+") as f:
         await f.write(data)
 
 async def asreader():
-    async with AIOFile("./utils/database.json", "r") as f:
+    async with AIOFile("./utils/db_api/database.json", "r") as f:
         data = json.loads(await f.read())
     return data
 
@@ -37,13 +49,11 @@ async def count_items(category_code, subcategory_code=None):
     data = await asreader()
     numer = 0
     if subcategory_code:
-        for i in range(len(data)):
-            i = str(i + 1)
+        for i in data:
             if data[i]["category_code"] == category_code and data[i]["subcategory_code"] == subcategory_code:
                 numer += 1
     else:
-        for i in range(len(data)):
-            i = str(i + 1)
+        for i in data:
             if data[i]["category_code"] == category_code:
                 numer += 1
     return numer
@@ -52,8 +62,7 @@ async def get_categories():
     data = await asreader()
     categories = []
     items = []
-    for i in range(len(data)):
-        i = str(i + 1)
+    for i in data:
         if data[i]["category_name"] not in categories:
             categories.append(data[i]["category_name"])
             items.append(Item(data[i]))
@@ -63,8 +72,7 @@ async def get_subcategories(category_code):
     data = await asreader()
     subcategories = []
     items = []
-    for i in range(len(data)):
-        i = str(i + 1)
+    for i in data:
         if data[i]["subcategory_name"] not in subcategories and data[i]["category_code"] == category_code:
             subcategories.append(data[i]["subcategory_name"])
             items.append(Item(data[i]))
@@ -73,8 +81,7 @@ async def get_subcategories(category_code):
 async def get_items(category_code, subcategory_code):
     data = await asreader()
     items = []
-    for i in range(len(data)):
-        i = str(i + 1)
+    for i in data:
         if data[i]["category_code"] == category_code and data[i]["subcategory_code"] == subcategory_code:
             items.append(Item(data[i]))
     return items
@@ -86,9 +93,8 @@ async def get_item(item_id):
 async def get_all_items():
     data = await asreader()
     all_items = []
-    for i in range(len(data)):
-        i = str(i + 1)
-        all_items.append(data[i])
+    for i in data:
+        all_items.append(Item(data[i]))
     return all_items
 
 async def delete_item(item_id):
@@ -96,4 +102,3 @@ async def delete_item(item_id):
     del data[str(item_id)]
     data = json.dumps(data)
     await aswriter(data)
-
