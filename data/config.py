@@ -16,6 +16,7 @@ super_id = os.getenv("SUPER_ID")
 admins = [
     os.getenv("SUPER_ID"),
 ]
+dbsource = str(os.getenv("DBSOURCE"))
 
 ip = os.getenv("ip")
 
